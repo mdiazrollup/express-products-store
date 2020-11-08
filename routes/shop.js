@@ -1,12 +1,11 @@
-const express = require('express');
 const path = require('path');
-const shopController = require('../controllers/shop');
 
+const express = require('express');
+
+const shopController = require('../controllers/shop');
 
 const router = express.Router();
 
-//Add a new middleware function
-// next is pass by express to allow to travel to next middleware
 router.get('/', shopController.getIndex);
 
 router.get('/products', shopController.getProducts);
@@ -19,10 +18,8 @@ router.post('/cart', shopController.postCart);
 
 router.post('/cart-delete-item', shopController.postCartDeleteProduct);
 
-router.post('/create-order', shopController.postOrder)
+router.post('/create-order', shopController.postOrder);
 
 router.get('/orders', shopController.getOrders);
-
-//router.get('/checkout', shopController.getCheckout);
 
 module.exports = router;
