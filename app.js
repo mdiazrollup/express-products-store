@@ -41,7 +41,10 @@ app.use(session({
 
 //Temporary to mock user
 app.use((req,res, next) => {
-    User.findById('5f9b3f07798a700cc640d206')
+    if(!req.session.user) {
+        return next();
+    }
+    User.findById(req.session.user._id)
     .then(user => {
         req.user = user;
         next();
