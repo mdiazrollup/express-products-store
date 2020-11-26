@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser =require('body-parser');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const csrf = require('csurf');
+const flash = require('connect-flash');
 const MongoDBStore = require('connect-mongodb-session')(session);
 const path = require('path');
 const errorController = require('./controllers/error');
@@ -21,6 +23,9 @@ const store = new MongoDBStore({
     collection: 'sessions'
 });
 
+//CSRF attacks token protection
+const csrfProtection = csrf();
+
 //Define template engine
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -38,6 +43,10 @@ app.use(session({
     saveUninitialized: false,
     store: store
 }));
+// should be after session init
+app.use(csrfProtection);
+// to save info in session for a limited time connect-flash package
+app.use(flash());
 
 //Temporary to mock user
 app.use((req,res, next) => {
@@ -52,6 +61,13 @@ app.use((req,res, next) => {
     .catch(err => console.log(err));
 });
 
+// Middleware to set fields in all responses
+app.use((req, res, next) => {
+    res.locals.isAuthenticated = req.session.user;
+    res.locals.csrfToken = req.csrfToken();
+    next();
+});
+
 // Call admin routes middleware
 //routes start with /admin now
 app.use('/admin',adminRoutes);
@@ -63,17 +79,17 @@ app.use(errorController.get404);
 
 mongoose.connect(MONGODB_URI)
 .then(result => {
-    User.findOne().then(oldUser => {
-        if(!oldUser) {
-            const user = new User({
-                name: 'Maria',
-                email: 'maria.test.com',
-                cart:{
-                    items: []
-                }
-            });
-            user.save();
-        }
-    });
+    // User.findOne().then(oldUser => {
+    //     if(!oldUser) {
+    //         const user = new User({
+    //             name: 'Maria',
+    //             email: 'maria.test.com',
+    //             cart:{
+    //                 items: []
+    //             }
+    //         });
+    //         user.save();
+    //     }
+    // });
     app.listen(3000);
 }).catch(err => console.log(err));
