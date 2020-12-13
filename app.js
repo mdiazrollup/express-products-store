@@ -48,6 +48,13 @@ app.use(csrfProtection);
 // to save info in session for a limited time connect-flash package
 app.use(flash());
 
+// Middleware to set fields in all responses
+app.use((req, res, next) => {
+    res.locals.isAuthenticated = req.session.user;
+    res.locals.csrfToken = req.csrfToken();
+    next();
+});
+
 //Temporary to mock user
 app.use((req,res, next) => {
     if(!req.session.user) {
@@ -55,17 +62,15 @@ app.use((req,res, next) => {
     }
     User.findById(req.session.user._id)
     .then(user => {
+        if(!user) {
+            return next();
+        }
         req.user = user;
         next();
     })
-    .catch(err => console.log(err));
-});
-
-// Middleware to set fields in all responses
-app.use((req, res, next) => {
-    res.locals.isAuthenticated = req.session.user;
-    res.locals.csrfToken = req.csrfToken();
-    next();
+    .catch(err => {
+        next(new Error(err));
+    });
 });
 
 // Call admin routes middleware
@@ -74,22 +79,20 @@ app.use('/admin',adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+//500 page for errors. Not use after handling with middleware
+//app.get('/500', errorController.get500);
+
 //404 page for not found routes
 app.use(errorController.get404);
 
+//handle errors middleware. They are executed when next is use with a Error objet
+app.use((error, req, res, next) => {
+    //res.redirect('/500');
+    // We use the render nstead of the redirect so we can use the handler with throw Error in sync code
+    res.status(500).render('500', { pageTitle: 'Error!', path: '/500', isAuthenticated: req.session.user });
+});
+
 mongoose.connect(MONGODB_URI)
 .then(result => {
-    // User.findOne().then(oldUser => {
-    //     if(!oldUser) {
-    //         const user = new User({
-    //             name: 'Maria',
-    //             email: 'maria.test.com',
-    //             cart:{
-    //                 items: []
-    //             }
-    //         });
-    //         user.save();
-    //     }
-    // });
     app.listen(3000);
 }).catch(err => console.log(err));
