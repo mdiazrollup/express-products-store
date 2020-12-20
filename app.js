@@ -8,9 +8,26 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const path = require('path');
 const errorController = require('./controllers/error');
 const User = require('./models/user');
+const multer = require('multer');
 
 const MONGODB_URI = 'mongodb+srv://root:p4ssw0rd@cluster0.ymwtf.mongodb.net/node-store?authSource=admin&replicaSet=atlas-2kbbg6-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true';
 
+const fileStorage = multer.diskStorage({
+    destination:(req, file, cb) => {
+        cb(null, 'images');
+    },
+    filename:(req, file, cb) => {
+        cb(null, new Date().toISOString() + '-' +file.originalname);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    if(file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+};
 
 //Routes import
 const adminRoutes = require('./routes/admin');
@@ -33,8 +50,12 @@ app.set('views', 'views');
 //To parse request body
 app.use(bodyParser.urlencoded({extended: false}));
 
+//To parse multipart forms parser
+app.use(multer({storage: fileStorage, fileFilter: fileFilter}).single('image'));
+
 //To serve static files from public
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 //to use session
 app.use(session({
