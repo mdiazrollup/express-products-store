@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
-const stripe = require('stripe')('privatekey');
+const stripe = require('stripe')('stripe privatekey');
 
 const Product = require('../models/product');
 const Order = require('../models/order');
