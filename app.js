@@ -9,8 +9,15 @@ const path = require('path');
 const errorController = require('./controllers/error');
 const User = require('./models/user');
 const multer = require('multer');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
+const fs = require('fs');
+const https = require('https');
 
-const MONGODB_URI = 'mongodb+srv://root:p4ssw0rd@cluster0.ymwtf.mongodb.net/node-store?authSource=admin&replicaSet=atlas-2kbbg6-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true';
+const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PWD}@cluster0.ymwtf.mongodb.net/${process.env.MONGO_DB}?authSource=admin&replicaSet=atlas-2kbbg6-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true`;
+
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'});
 
 const fileStorage = multer.diskStorage({
     destination:(req, file, cb) => {
@@ -43,9 +50,20 @@ const store = new MongoDBStore({
 //CSRF attacks token protection
 const csrfProtection = csrf();
 
+// Read file keys to use https
+//const privatekey = fs.readFileSync('server.key');
+//const certificate = fs.readFileSync('server.cert');
+
 //Define template engine
 app.set('view engine', 'ejs');
 app.set('views', 'views');
+
+// Helmet middleware for response header protection
+app.use(helmet());
+// To compress assets
+app.use(compression());
+// To log in files
+app.use(morgan('combined', {stream: accessLogStream}));
 
 //To parse request body
 app.use(bodyParser.urlencoded({extended: false}));
@@ -115,5 +133,6 @@ app.use((error, req, res, next) => {
 
 mongoose.connect(MONGODB_URI)
 .then(result => {
-    app.listen(3000);
+   // https.createServer({key: privatekey, cert: certificate}, app).listen(process.env.PORT || 3000); // create a https server
+   app.listen(process.env.PORT || 3000);
 }).catch(err => console.log(err));

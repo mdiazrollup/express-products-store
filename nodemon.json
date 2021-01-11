@@ -1,0 +1,8 @@
+{
+    "env": {
+        "MONGO_USER": "root",
+        "MONGO_PWD": "p4ssw0rd",
+        "MONGO_DB": "node-store",
+        "STRIPE_KEY": "stripe privatekey"
+    }
+}
